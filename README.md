@@ -14,3 +14,7 @@
 
 - Output will include __FILENAME_magnitudes.csv__ and __FILENAME_FFT.csv__
 
+## Libraries used
+- https://github.com/dntj/jsfft
+- https://github.com/C2FO/fast-csv
+
