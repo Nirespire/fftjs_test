@@ -1,14 +1,18 @@
 {
-  "name": "ROAMM_Watch_FFT",
-  "version": "1.0.0",
-  "description": "",
-  "main": "fft_test.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "fast-csv": "^1.0.0"
-  }
+    "name": "ROAMM_Watch_FFT",
+    "version": "1.0.0",
+    "description": "Prototype of frequency analysis in javascript",
+    "main": "fft_test.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Sanjay Nair",
+    "license": "MIT",
+    "dependencies": {
+        "fast-csv": "^1.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Nirespire/fftjs_test.git"
+    }
 }
