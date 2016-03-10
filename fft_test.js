@@ -10,7 +10,7 @@ var vms = [];
     Input file containing raw accelerometer data with NO headers
     Timestamp | accelX | accelY | accelZ
 */
-var FILENAME = "chores.csv";
+var FILENAME = "data/nonulls/time_chores_matin.csv";
 
 loadData();
 
@@ -29,7 +29,7 @@ function loadData() {
             if (newItem.x && newItem.y && newItem.z) {
                 rawData.push(newItem);
             }
-            
+
         })
         .on("end", function() {
             console.log(rawData.length + " items");
@@ -51,15 +51,30 @@ function processData(rawData) {
         });
     }
 
-    // Loop over every 15 second interval of data
-    for (var i = 0; i < vms.length; ++i) {
-        var startIndex = i;
-        ++i;
-        while (i < vms.length - 1 && vms[i].timestamp - vms[startIndex].timestamp < 15000) {
-            ++i;
-        }
-        //console.log(i - startIndex);
-    }
+    // Write magnitudes to a file
+    var csvStream = csv.createWriteStream({headers: false}),
+    writableStream = fs.createWriteStream(FILENAME + "_vectormagnitudes.csv");
+
+    writableStream.on("finish", function() {
+        console.log("Finished writing vms to file");
+    });
+    csvStream.pipe(writableStream);
+
+    vms.forEach(function(item, i) {
+        csvStream.write({a: item.vm});
+    });
+
+    csvStream.end();
+
+    // // Loop over every 15 second interval of data
+    // for (var i = 0; i < vms.length; ++i) {
+    //     var startIndex = i;
+    //     ++i;
+    //     while (i < vms.length - 1 && vms[i].timestamp - vms[startIndex].timestamp < 15000) {
+    //         ++i;
+    //     }
+    //     //console.log(i - startIndex);
+    // }
 
     // Convert vm's into complex array for processing
     console.log("Converting to complex array");
