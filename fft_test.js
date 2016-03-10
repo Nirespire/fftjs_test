@@ -18,6 +18,8 @@ function loadData() {
     console.log("Begin load");
     var stream = fs.createReadStream(FILENAME);
 
+    var row = 1;
+
     var csvStream = csv()
         .on("data", function(data) {
             var newItem = {
@@ -26,14 +28,20 @@ function loadData() {
                 y: parseFloat(data[2]),
                 z: parseFloat(data[3])
             };
-            if (newItem.x && newItem.y && newItem.z) {
+            if (Object.prototype.toString.call(newItem.timestamp) === "[object Date]" && !isNaN(newItem.timestamp.getTime())) {
                 rawData.push(newItem);
             }
+            else{
+                console.error(data[0]);
+                console.error(row, newItem);
+            }
+            row++;
 
         })
         .on("end", function() {
             console.log(rawData.length + " items");
             console.log("Done load");
+            console.log(rawData.length);
             processData(rawData);
         });
 
@@ -106,8 +114,14 @@ function processData(rawData) {
     // Get signal magnitudes from result
     var strength = frequencies.magnitude();
 
-    // Write magnitudes to a file
-    var csvStream = csv.createWriteStream({headers: false}),
+    // Scale magnitudes
+    var scaledStrength = [];
+    strength.forEach(function(item, i){
+        scaledStrength.push(item / Math.sqrt(strength.length));
+    });
+
+    // Write raw and scaled magnitudes to a file
+    var csvStream = csv.createWriteStream({headers: true}),
     writableStream = fs.createWriteStream(FILENAME + "_magnitudes.csv");
 
     writableStream.on("finish", function() {
@@ -116,10 +130,27 @@ function processData(rawData) {
     csvStream.pipe(writableStream);
 
     strength.forEach(function(item, i) {
-        csvStream.write({a: item});
+        csvStream.write({i: i+1, raw_magnitude: item, scaled_magnitude: scaledStrength[i]});
     });
 
     csvStream.end();
+
+
+    frequencies2 = [];
+
+    var scale = 30.0 / strength.length;
+    for(var i = 1; i < strength.length; i++){
+        frequencies2[i] = i * scale;
+    }
+
+    frequencies2 = frequencies2.splice(0,Math.ceil(frequencies2.length / 2));
+
+    console.log(frequencies2.length, frequencies2[frequencies2.length-1]);
+
+
+    // Remove first element to eliminate DC
+    scaledStrength.shift();
+
 
     console.log("Done process");
 }
