@@ -5,6 +5,7 @@ var fs = require('fs');
 var _ = require('lodash');
 
 var rawData = [];
+var XS = [];
 var xs = [];
 var vms = [];
 
@@ -20,6 +21,13 @@ var dfIdx = -1;
 var FILENAME = "data/nonulls/time_chores_matin.csv";
 
 loadData();
+
+function clearGlobals(){
+    xs = [];
+    vms = [];
+    STRENGTH = [];
+    FREQUENCIES = [];
+}
 
 function loadData() {
     console.log("Begin load");
@@ -38,7 +46,7 @@ function loadData() {
 
             if (Object.prototype.toString.call(newItem.timestamp) === "[object Date]" && !isNaN(newItem.timestamp.getTime())) {
                 rawData.push(newItem);
-                xs.push(newItem.x);
+                XS.push(newItem.x);
             } else {
                 console.error("ERROR IN ROW", row);
                 console.error(data[0], newItem);
@@ -48,7 +56,15 @@ function loadData() {
         })
         .on("end", function() {
             console.log(rawData.length + " items loaded");
-            processData(rawData);
+
+            for(var i = 0; i < rawData.length; i++){
+                var rawDataSlice = _.slice(rawData, i, i+45);
+                xs = _.slice(XS, i, i+45);
+                console.log("Items in current slice", rawDataSlice.length);
+                processData(rawDataSlice);
+                clearGlobals();
+                i+= 44;
+            }
         });
 
     stream.pipe(csvStream);
@@ -62,34 +78,24 @@ function processData(rawData) {
         vms.push(getVectorMagnitude(rawData[i]));
     }
 
-    // Write magnitudes to a file
-    var csvStream = csv.createWriteStream({
-            headers: false
-        }),
-        writableStream = fs.createWriteStream(FILENAME + "_vectormagnitudes.csv");
-
-    writableStream.on("finish", function() {
-        console.log("Finished writing vms to file");
-    });
-    csvStream.pipe(writableStream);
-
-    vms.forEach(function(item, i) {
-        csvStream.write({
-            a: item
-        });
-    });
-
-    csvStream.end();
-
-    // // Loop over every 15 second interval of data
-    // for (var i = 0; i < vms.length; ++i) {
-    //     var startIndex = i;
-    //     ++i;
-    //     while (i < vms.length - 1 && vms[i].timestamp - vms[startIndex].timestamp < 15000) {
-    //         ++i;
-    //     }
-    //     //console.log(i - startIndex);
-    // }
+    // // Write magnitudes to a file
+    // var csvStream = csv.createWriteStream({
+    //         headers: false
+    //     }),
+    //     writableStream = fs.createWriteStream(FILENAME + "_vectormagnitudes.csv");
+    //
+    // writableStream.on("finish", function() {
+    //     console.log("Finished writing vms to file");
+    // });
+    // csvStream.pipe(writableStream);
+    //
+    // vms.forEach(function(item, i) {
+    //     csvStream.write({
+    //         a: item
+    //     });
+    // });
+    //
+    // csvStream.end();
 
     // Convert vm's into complex array for processing
     console.log("Converting to complex array");
@@ -104,24 +110,24 @@ function processData(rawData) {
     var frequencies = data.FFT();
 
     // Write magnitudes to a file
-    var csvStream = csv.createWriteStream({
-            headers: false
-        }),
-        writableStream = fs.createWriteStream(FILENAME + "_FFT.csv");
-
-    writableStream.on("finish", function() {
-        console.log("Finished writing FFT to file");
-    });
-    csvStream.pipe(writableStream);
-
-    frequencies.forEach(function(item, i) {
-        csvStream.write({
-            real: item.real,
-            imag: item.imag
-        });
-    });
-
-    csvStream.end();
+    // var csvStream = csv.createWriteStream({
+    //         headers: false
+    //     }),
+    //     writableStream = fs.createWriteStream(FILENAME + "_FFT.csv");
+    //
+    // writableStream.on("finish", function() {
+    //     console.log("Finished writing FFT to file");
+    // });
+    // csvStream.pipe(writableStream);
+    //
+    // frequencies.forEach(function(item, i) {
+    //     csvStream.write({
+    //         real: item.real,
+    //         imag: item.imag
+    //     });
+    // });
+    //
+    // csvStream.end();
 
     // Get signal magnitudes from result
     var strength = frequencies.magnitude();
@@ -132,26 +138,26 @@ function processData(rawData) {
         scaledStrength.push(item / Math.sqrt(strength.length));
     });
 
-    // Write raw and scaled magnitudes to a file
-    var csvStream = csv.createWriteStream({
-            headers: true
-        }),
-        writableStream = fs.createWriteStream(FILENAME + "_magnitudes.csv");
-
-    writableStream.on("finish", function() {
-        console.log("Finished writing magnitudes to file");
-    });
-    csvStream.pipe(writableStream);
-
-    strength.forEach(function(item, i) {
-        csvStream.write({
-            i: i + 1,
-            raw_magnitude: item,
-            scaled_magnitude: scaledStrength[i]
-        });
-    });
-
-    csvStream.end();
+    // // Write raw and scaled magnitudes to a file
+    // var csvStream = csv.createWriteStream({
+    //         headers: true
+    //     }),
+    //     writableStream = fs.createWriteStream(FILENAME + "_magnitudes.csv");
+    //
+    // writableStream.on("finish", function() {
+    //     console.log("Finished writing magnitudes to file");
+    // });
+    // csvStream.pipe(writableStream);
+    //
+    // strength.forEach(function(item, i) {
+    //     csvStream.write({
+    //         i: i + 1,
+    //         raw_magnitude: item,
+    //         scaled_magnitude: scaledStrength[i]
+    //     });
+    // });
+    //
+    // csvStream.end();
 
 
     // TODO this should be computed only once
@@ -181,51 +187,53 @@ function processData(rawData) {
 
 
 function runAnalysis() {
-    console.log("Begin Analysis");
 
-    console.log("Computing Feature 1");
+    //console.log("Begin Analysis");
+    //console.log("Computing Feature 1");
     var f1_avgVectorMagnitudes = average(vms);
 
-    console.log("Computing Feature 2");
+    //console.log("Computing Feature 2");
     var f2_stdDevVectorMagnitudes = standardDeviation(vms);
 
-    console.log("Computing Feature 3 and 4");
+    //console.log("Computing Feature 3 and 4");
     // Used for mangle and sdangle
     var angles = getAngles(xs, vms);
     var f3_mangle = average(angles);
     var f4_sdAngle = standardDeviation(angles);
 
-    console.log("Computing Feature 5");
+    //console.log("Computing Feature 5");
     var f5_p625 = getP625(FREQUENCIES, STRENGTH);
 
-    console.log("Computing Feature 6");
+    //console.log("Computing Feature 6");
     var f6_df = getDominantFrequency(FREQUENCIES, STRENGTH);
 
-    console.log("Computing Feature 7");
+    //console.log("Computing Feature 7");
     var f7_fpdf = getFpdf(STRENGTH, dfIdx);
 
     console.log(f1_avgVectorMagnitudes, f2_stdDevVectorMagnitudes, f3_mangle, f4_sdAngle, f5_p625, f6_df, f7_fpdf);
 
 
-    var csvStream = csv.createWriteStream({
-            headers: true
-        }),
-        writableStream = fs.createWriteStream(FILENAME + "_features.csv");
+    // var csvStream = csv.createWriteStream({
+    //         headers: true
+    //     }),
+    //     writableStream = fs.createWriteStream(FILENAME + "_features.csv");
+    //
+    // writableStream.on("finish", function() {
+    //     console.log("Finished writing features to file");
+    // });
+    // csvStream.pipe(writableStream);
+    // csvStream.write({
+    //     AvgVM: f1_avgVectorMagnitudes,
+    //     stdDevVM: f2_stdDevVectorMagnitudes,
+    //     mangle: f3_mangle,
+    //     sdangle: f4_sdAngle,
+    //     p625: f5_p625,
+    //     df: f6_df,
+    //     fpdf: f7_fpdf
+    // });
+    // csvStream.end();
 
-    writableStream.on("finish", function() {
-        console.log("Finished writing features to file");
-    });
-    csvStream.pipe(writableStream);
-    csvStream.write({
-        AvgVM: f1_avgVectorMagnitudes,
-        stdDevVM: f2_stdDevVectorMagnitudes,
-        mangle: f3_mangle,
-        sdangle: f4_sdAngle,
-        p625: f5_p625,
-        df: f6_df,
-        fpdf: f7_fpdf
-    });
-    csvStream.end();
+    return {f1:f1_avgVectorMagnitudes, f2:f2_stdDevVectorMagnitudes, f3:f3_mangle, f4:f4_sdAngle, f5:f5_p625, f6:f6_df, f7:f7_fpdf}
 }
 
 function sum(arr){
@@ -266,6 +274,8 @@ function getP625(freqs, mags){
     var point6Hz = getClosestIndex(freqs, 0.6);
     var twoPoint5Hz = getClosestIndex(freqs, 2.5);
     var fiveHz = getClosestIndex(freqs, 5);
+
+    console.log(point6Hz, twoPoint5Hz, fiveHz);
 
     var numerator = average(_.slice(STRENGTH, point6Hz, twoPoint5Hz+1));
     var denominator = average(_.slice(STRENGTH, 0, fiveHz+1));
