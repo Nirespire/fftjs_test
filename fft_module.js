@@ -128,8 +128,9 @@ function processData(rawData) {
         frequencies[i] = i * scale;
     }
 
-    // Eliminate upper half of the frequencies
+    // Eliminate upper half of the frequencies and strength
     frequencies = frequencies.splice(0, Math.ceil(frequencies.length / 2));
+    strength = strength.splice(0, Math.ceil(strength.length / 2));
 
     console.log(frequencies[frequencies.length-1]);
 
@@ -212,13 +213,14 @@ function getP625(freqs, mags) {
 
     console.log(point6Hz, twoPoint5Hz, fiveHz);
     console.log(freqs[point6Hz], freqs[twoPoint5Hz], freqs[fiveHz]);
-    console.log(freqs[point6Hz+1], freqs[twoPoint5Hz-1], freqs[fiveHz-1]);
+    console.log(freqs[point6Hz+1], freqs[twoPoint5Hz-1], freqs[fiveHz+1]);
 
-    var numerator = sum(_.slice(mags, point6Hz, twoPoint5Hz + 1));
-    var denominator = sum(_.slice(mags, 0, fiveHz + 1));
-    denominator = sum(mags);
+    var numerator = sum(_.slice(mags, point6Hz, twoPoint5Hz - 1));
+    var denominator = sum(_.slice(mags, 0, fiveHz - 1));
 
-    return numerator / denominator;
+    console.log("numerator", numerator, "denominator", denominator);
+
+    return (numerator / denominator);
 }
 
 function getDominantFrequency(freqs, mags) {
@@ -256,7 +258,7 @@ function getFpdf(mags, dfIdx) {
 
     console.log(numSum, sumStrength);
 
-    return (numSum / sumStrength)*2;
+    return numSum / sumStrength;
 
 }
 
@@ -266,7 +268,11 @@ function getClosestIndexLeft(arr, val) {
         i++;
     }
 
-    if (i == 0) {
+    if(arr[i+1] === val){
+      return i+1;
+    }
+
+    if (i === 0) {
         i++;
     }
 
@@ -279,11 +285,15 @@ function getClosestIndexRight(arr, val){
         i++;
     }
 
-    if (i == 0) {
+    if(arr[i+1] === val){
+      return i+1;
+    }
+
+    if (i === 0) {
         i++;
     }
 
-    if(i == arr.length){
+    if(i === arr.length){
         i--;
     }
 
