@@ -124,12 +124,18 @@ function processData(rawData) {
 
     // Generate frequency vector
     var scale = 30.0 / strength.length;
-    for (var i = 1; i < strength.length; i++) {
-        frequencies[i - 1] = i * scale;
+    for (var i = 0; i < strength.length; i++) {
+        frequencies[i] = i * scale;
     }
+
+    // Eliminate upper half of the frequencies
+    frequencies = frequencies.splice(0, Math.ceil(frequencies.length / 2));
+
+    console.log(frequencies[frequencies.length-1]);
 
     // Remove first element to eliminate DC
     strength.shift();
+    frequencies.shift();
 
     return runAnalysis(xs, vms, strength, frequencies);
 }
@@ -200,14 +206,17 @@ function getAngles(xs, vms) {
 function getP625(freqs, mags) {
     // TODO these should be computed only once
 
-    var point6Hz = getClosestIndex(freqs, 0.6);
-    var twoPoint5Hz = getClosestIndex(freqs, 2.5);
-    var fiveHz = getClosestIndex(freqs, 5);
+    var point6Hz = getClosestIndexLeft(freqs, 0.6);
+    var twoPoint5Hz = getClosestIndexRight(freqs, 2.5);
+    var fiveHz = getClosestIndexLeft(freqs, 5);
 
     console.log(point6Hz, twoPoint5Hz, fiveHz);
+    console.log(freqs[point6Hz], freqs[twoPoint5Hz], freqs[fiveHz]);
+    console.log(freqs[point6Hz+1], freqs[twoPoint5Hz-1], freqs[fiveHz-1]);
 
-    var numerator = average(_.slice(mags, point6Hz, twoPoint5Hz + 1));
-    var denominator = average(_.slice(mags, 0, fiveHz + 1));
+    var numerator = sum(_.slice(mags, point6Hz, twoPoint5Hz + 1));
+    var denominator = sum(_.slice(mags, 0, fiveHz + 1));
+    denominator = sum(mags);
 
     return numerator / denominator;
 }
@@ -245,11 +254,13 @@ function getFpdf(mags, dfIdx) {
         numSum += mags[i++];
     }
 
-    return numSum / sumStrength;
+    console.log(numSum, sumStrength);
+
+    return (numSum / sumStrength)*2;
 
 }
 
-function getClosestIndex(arr, val) {
+function getClosestIndexLeft(arr, val) {
     var i = 0;
     while (arr[i] < val) {
         i++;
@@ -260,6 +271,23 @@ function getClosestIndex(arr, val) {
     }
 
     return i - 1;
+}
+
+function getClosestIndexRight(arr, val){
+    var i = 0;
+    while (arr[i] < val) {
+        i++;
+    }
+
+    if (i == 0) {
+        i++;
+    }
+
+    if(i == arr.length){
+        i--;
+    }
+
+    return i;
 }
 
 function getVectorMagnitude(data) {
