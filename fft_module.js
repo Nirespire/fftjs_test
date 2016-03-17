@@ -9,6 +9,8 @@ var XS = [];
 var DF_IDX = -1;
 var OUTPUT = [];
 
+var P625 = [];
+
 var ONE_EIGHTY_OVER_PI = 180 / Math.PI;
 var POINTS_IN_WINDOW = 450;
 
@@ -78,6 +80,29 @@ function loadData() {
                 });
             });
             csvStream.end();
+
+            var csvStream2 = csv.createWriteStream({
+                    headers: true
+                }),
+                writableStream = fs.createWriteStream(FILENAME + "p625.csv");
+
+            writableStream.on("finish", function() {
+                console.log("Finished writing p625 to file");
+            });
+            csvStream2.pipe(writableStream);
+
+            console.log(P625.length);
+
+            P625.forEach(function(item, i) {
+                csvStream2.write({
+                    numerator: item.numerator,
+                    denominator: item.denominator,
+                    point6_magnitude: item.point6_magnitude,
+                    twoPoint5_magnitude: item.twoPoint5_magnitude,
+                    five_magnitude: item.five_magnitude
+                });
+            });
+            csvStream2.end();
         });
 
     stream.pipe(csvStream);
@@ -219,6 +244,14 @@ function getP625(freqs, mags) {
     var denominator = sum(_.slice(mags, 0, fiveHz - 1));
 
     console.log("numerator", numerator, "denominator", denominator);
+
+    P625.push({
+        numerator: numerator,
+        denominator: denominator,
+        point6_magnitude: mags[point6Hz],
+        twoPoint5_magnitude: mags[twoPoint5Hz],
+        five_magnitude: mags[fiveHz]
+    });
 
     return (numerator / denominator);
 }
