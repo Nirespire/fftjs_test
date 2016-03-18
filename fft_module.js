@@ -241,7 +241,7 @@ function getP625(freqs, mags) {
     console.log(freqs[point6Hz+1], freqs[twoPoint5Hz-1], freqs[fiveHz+1]);
 
     var numerator = sum(_.slice(mags, point6Hz, twoPoint5Hz - 1));
-    var denominator = sum(_.slice(mags, 0, fiveHz - 1));
+    var denominator = sum(mags, 0, fiveHz - 1);
 
     console.log("numerator", numerator, "denominator", denominator);
 
